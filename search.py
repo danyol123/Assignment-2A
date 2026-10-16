@@ -49,6 +49,7 @@ Each strategy is a function:   strategy(problem) -> Node | None
     needs it and document the decision in the report.
 """
 
+import heapq
 import math
 import re
 import sys
@@ -318,14 +319,44 @@ def bfs(problem: Problem) -> Optional[Node]:
     return None
 
 
+def _best_first(problem: Problem, priority) -> Optional[Node]:
+    """Shared best-first loop used by GBFS and A*.
+
+    `priority(node)` returns the value the frontier is ordered by.
+    The heap key comes from node.sort_key(), i.e. (priority, node number,
+    creation order), which applies the assignment's tie-break rules (NOTE 2).
+    The goal test is done when a node is popped, not when it is created.
+    Cycles: moves back onto the branch's own path are not generated, so the
+    search stays tree-based (no global explored set) but always terminates.
+    """
+    root = problem.root()
+    frontier = [(root.sort_key(priority(root)), root)]   # min-heap
+    while frontier:
+        _, node = heapq.heappop(frontier)
+        if problem.is_goal(node):
+            return node
+        for child in problem.expand(node, avoid_cycles=True):
+            heapq.heappush(frontier, (child.sort_key(priority(child)), child))
+    return None
+
+
 def gbfs(problem: Problem) -> Optional[Node]:
-    """Greedy Best-First Search (informed): orders the frontier by h(n) only."""
-    raise NotImplementedError("GBFS has not been implemented yet")
+    """Greedy Best-First Search (informed): orders the frontier by h(n) only.
+
+    h(n) = straight-line distance to the nearest destination. Ignores the
+    cost already paid, so it is fast but not optimal (the "greedy trap").
+    """
+    return _best_first(problem, lambda n: problem.heuristic(n))
 
 
 def astar(problem: Problem) -> Optional[Node]:
-    """A* Search (informed): orders the frontier by f(n) = g(n) + h(n)."""
-    raise NotImplementedError("AS has not been implemented yet")
+    """A* Search (informed): orders the frontier by f(n) = g(n) + h(n).
+
+    Optimal when h is admissible, i.e. it never overestimates the true
+    remaining cost. That fails if an edge costs less than the straight-line
+    distance between its two nodes (see test13).
+    """
+    return _best_first(problem, lambda n: n.cost + problem.heuristic(n))
 
 
 def cus1(problem: Problem) -> Optional[Node]:
