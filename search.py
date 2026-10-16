@@ -52,6 +52,7 @@ Each strategy is a function:   strategy(problem) -> Node | None
 import math
 import re
 import sys
+from collections import deque
 from typing import Dict, List, Optional, Tuple
 
 # Names accepted on the command line -> function name defined further below.
@@ -139,11 +140,18 @@ class Problem:
         return self.make_node(self.origin, None, 0)
 
     # ---- expansion ----
-    def expand(self, node: Node) -> List[Node]:
+    def expand(self, node: Node, avoid_cycles: bool = False) -> List[Node]:
         """Create and return the children of `node`, in ascending node-number
-        order. Every child returned counts as a created node."""
+        order. Every child returned counts as a created node.
+
+        avoid_cycles=True skips any move back onto a map node that is already
+        on this branch's own path (origin -> node). Skipped moves are never
+        created, so they are not counted in number_of_nodes. The search is
+        still tree-based: there is no global explored set."""
         children = []
         for neighbour, step_cost in self.edges.get(node.state, []):
+            if avoid_cycles and node.on_path(neighbour):
+                continue
             children.append(self.make_node(neighbour, node, step_cost))
         return children
 
@@ -263,13 +271,51 @@ def parse_problem(filename: str) -> Problem:
 # See the "HOW TO IMPLEMENT A STRATEGY" notes at the top of this file.
 
 def dfs(problem: Problem) -> Optional[Node]:
-    """Depth-First Search (uninformed)."""
-    raise NotImplementedError("DFS has not been implemented yet")
+    """Depth-First Search (uninformed).
+
+    Frontier is a LIFO stack. Always expands the deepest node; when a branch
+    has no moves left the search backtracks to the most recent unexplored
+    option. The goal test is done when a node is taken off the stack.
+
+    Tie-breaking (NOTE 2): children are generated in ascending node order,
+    then pushed in REVERSE so the smallest node number is popped first.
+    Cycles: moves back onto the branch's own path are not generated
+    (expand(avoid_cycles=True)), otherwise DFS would loop forever on
+    two-way edges. DFS is neither complete-by-cost nor optimal: it returns
+    the first goal it happens to reach, not the cheapest.
+    """
+    frontier = [problem.root()]                 # list used as a stack
+    while frontier:
+        node = frontier.pop()
+        if problem.is_goal(node):
+            return node
+        children = problem.expand(node, avoid_cycles=True)
+        frontier.extend(reversed(children))     # smallest node ends up on top
+    return None
 
 
 def bfs(problem: Problem) -> Optional[Node]:
-    """Breadth-First Search (uninformed)."""
-    raise NotImplementedError("BFS has not been implemented yet")
+    """Breadth-First Search (uninformed).
+
+    Frontier is a FIFO queue, so every node at depth d is expanded before any
+    node at depth d+1. The goal test is done when a node is taken off the
+    queue. Finds the goal with the FEWEST moves (not necessarily the lowest
+    cost, because edge costs differ).
+
+    Tie-breaking (NOTE 2): children are generated in ascending node order and
+    a FIFO queue keeps them in creation order, so nodes created earlier are
+    expanded earlier.
+    Cycles: moves back onto the branch's own path are not generated
+    (expand(avoid_cycles=True)). This keeps every branch finite, so BFS also
+    terminates when no goal is reachable.
+    """
+    frontier = deque([problem.root()])
+    while frontier:
+        node = frontier.popleft()
+        if problem.is_goal(node):
+            return node
+        frontier.extend(problem.expand(node, avoid_cycles=True))
+    return None
 
 
 def gbfs(problem: Problem) -> Optional[Node]:
