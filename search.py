@@ -288,9 +288,34 @@ def cus1(problem: Problem) -> Optional[Node]:
 
 
 def cus2(problem: Problem) -> Optional[Node]:
-    """Custom strategy 2 (informed): an informed method to find a shortest path
-    (fewest moves) to a goal."""
-    raise NotImplementedError("CUS2 has not been implemented yet")
+    """Custom strategy 2 (informed): Depth-First Branch and Bound, fewest moves.
+
+    g(n) = node.depth (number of moves), h(n) = 0 for a goal, otherwise 1
+    (a non-goal needs at least one more move, so h is admissible).
+    A branch is pruned when f = g + h >= the best number of moves found so far.
+    """
+    sys.setrecursionlimit(10000)
+    best: Optional[Node] = None          # best goal Node that found so far
+
+    def h(node: Node) -> int:
+        return 0 if problem.is_goal(node) else 1
+
+    def visit(node: Node) -> None:
+        nonlocal best
+        if problem.is_goal(node):
+            if best is None or node.depth < best.depth:
+                best = node              # strictly better; ties keep the earlier one
+            return
+        for child in problem.expand(node):           # ascending node order
+            if node.on_path(child.state):            # avoid loops within a branch
+                continue
+            bound = best.depth if best is not None else math.inf
+            if child.depth + h(child) >= bound:      # prune
+                continue
+            visit(child)
+
+    visit(problem.root())
+    return best
 
 
 # Method name used on the command line -> strategy function.
