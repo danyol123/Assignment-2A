@@ -406,18 +406,18 @@ def cus2(problem: Problem) -> Optional[Node]:
                 best = node
             return
 
-        children = problem.expand(node)
-        # closest to a goal first; ties -> smaller node number, then earlier created
+        children = problem.expand(node, avoid_cycles=True)
+
+        # Closest to a goal first; ties -> smaller node number, then earlier created
         children.sort(key=lambda c: (problem.heuristic(c), c.state, c.order))
 
         for child in children:
-            # avoid loops within a branch
-            if node.on_path(child.state):
-                continue
             bound = best.depth if best is not None else math.inf
-            # prune
+
+            # Prune branches that cannot improve the best solution
             if child.depth + h(child) >= bound:
                 continue
+
             visit(child)
 
     visit(problem.root())
