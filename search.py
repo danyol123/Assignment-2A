@@ -365,35 +365,63 @@ def cus1(problem: Problem) -> Optional[Node]:
 
 
 def cus2(problem: Problem) -> Optional[Node]:
-    """Custom strategy 2 (informed): Depth-First Branch and Bound, fewest moves.
+    """Custom strategy 2 (informed): Depth-First Branch and Bound that finds
+    the path with the FEWEST MOVES to any destination.
 
-    g(n) = node.depth (number of moves), h(n) = 0 for a goal, otherwise 1
-    (a non-goal needs at least one more move, so h is admissible).
-    A branch is pruned when f = g + h >= the best number of moves found so far.
+    g(n) = node.depth (moves).
+    h(n) = optimistic number of moves still needed:
+           0 for a destination, otherwise
+           max(1, ceil(straight-line distance to nearest destination
+                       / length of the longest edge in the graph)).
+           One move can never cover more than the longest edge, so this
+           never overestimates (admissible) and the result stays optimal.
+    f(n) = g(n) + h(n). A branch is pruned when f >= the moves of the best
+    solution found so far.
+
+    Children are visited closest-to-goal first (GBFS-style ordering). This
+    only changes the visiting ORDER, so good solutions are found early and
+    the bound shrinks quickly; pruning itself still uses the move-based h.
     """
     sys.setrecursionlimit(10000)
-    best: Optional[Node] = None          # best goal Node that found so far
+    best: Optional[Node] = None
+
+    # Longest straight-line length of any single edge (computed once).
+    longest_edge = max(
+        (math.hypot(problem.nodes[a][0] - problem.nodes[b][0],
+                    problem.nodes[a][1] - problem.nodes[b][1])
+         for a, neighbours in problem.edges.items() for b, _cost in neighbours),
+        default=1,
+    ) or 1
 
     def h(node: Node) -> int:
-        return 0 if problem.is_goal(node) else 1
+        if problem.is_goal(node):
+            return 0
+        # small epsilon so floating-point noise never rounds the estimate up
+        return max(1, math.ceil(problem.heuristic(node) / longest_edge - 1e-9))
 
     def visit(node: Node) -> None:
         nonlocal best
         if problem.is_goal(node):
             if best is None or node.depth < best.depth:
-                best = node              # strictly better; ties keep the earlier one
+                best = node
             return
-        for child in problem.expand(node):           # ascending node order
-            if node.on_path(child.state):            # avoid loops within a branch
+
+        children = problem.expand(node)
+        # closest to a goal first; ties -> smaller node number, then earlier created
+        children.sort(key=lambda c: (problem.heuristic(c), c.state, c.order))
+
+        for child in children:
+            # avoid loops within a branch
+            if node.on_path(child.state):
                 continue
             bound = best.depth if best is not None else math.inf
-            if child.depth + h(child) >= bound:      # prune
+            # prune
+            if child.depth + h(child) >= bound:
                 continue
             visit(child)
 
     visit(problem.root())
     return best
-
 
 # Method name used on the command line -> strategy function.
 STRATEGIES = {
