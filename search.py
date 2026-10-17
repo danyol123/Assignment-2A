@@ -360,8 +360,37 @@ def astar(problem: Problem) -> Optional[Node]:
 
 
 def cus1(problem: Problem) -> Optional[Node]:
-    """Custom strategy 1 (uninformed): an uninformed method to find a path to a goal."""
-    raise NotImplementedError("CUS1 has not been implemented yet")
+    """Custom strategy 1 (uninformed): Uniform-Cost Search (UCS).
+ 
+    Frontier is a priority queue (min-heap) ordered by g(n), the total path
+    cost from the origin. It uses NO knowledge of where the goal is (no
+    heuristic), so it is uninformed, but unlike BFS it looks at edge COSTS
+    rather than the number of moves: the cheapest unexpanded node is always
+    expanded next. UCS is the same loop as A* with h(n) = 0.
+ 
+    The goal test is done when a node is POPPED, not when it is created.
+    That is what makes UCS optimal: the first goal popped is guaranteed to
+    be the cheapest one, because every cheaper partial path was expanded first.
+ 
+    Tie-breaking (NOTE 2): the heap key is node.sort_key(g) = (g, node
+    number, creation order), so equal-cost nodes are expanded smaller node
+    number first, then earlier created first.
+    Cycles: moves back onto the branch's own path are not generated
+    (expand(avoid_cycles=True)). The search stays tree-based (no global
+    explored set) but every branch is finite, so it also terminates when no
+    goal is reachable.
+    Complete and optimal for non-negative edge costs. Weakness: it spreads
+    out in every direction (like BFS) and can create many nodes.
+    """
+    root = problem.root()
+    frontier = [(root.sort_key(root.cost), root)]       # min-heap ordered by g(n)
+    while frontier:
+        _, node = heapq.heappop(frontier)
+        if problem.is_goal(node):
+            return node
+        for child in problem.expand(node, avoid_cycles=True):
+            heapq.heappush(frontier, (child.sort_key(child.cost), child))
+    return None
 
 
 def cus2(problem: Problem) -> Optional[Node]:
