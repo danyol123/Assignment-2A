@@ -394,25 +394,34 @@ def cus1(problem: Problem) -> Optional[Node]:
 
 
 def cus2(problem: Problem) -> Optional[Node]:
-    """Custom strategy 2 (informed): Depth-First Branch and Bound that finds
+    """Custom strategy 2 (informed): IDA* (Iterative Deepening A*) that finds
     the path with the FEWEST MOVES to any destination.
 
-    g(n) = node.depth (moves).
+    g(n) = node.depth (number of moves from the origin).
     h(n) = optimistic number of moves still needed:
            0 for a destination, otherwise
            max(1, ceil(straight-line distance to nearest destination
                        / length of the longest edge in the graph)).
-           One move can never cover more than the longest edge, so this
-           never overestimates (admissible) and the result stays optimal.
-    f(n) = g(n) + h(n). A branch is pruned when f >= the moves of the best
-    solution found so far.
+           One move can never cover more than the longest edge, so h never
+           overestimates (admissible) and the first goal found is optimal
+           in number of moves.
+    f(n) = g(n) + h(n).
 
-    Children are visited closest-to-goal first (GBFS-style ordering). This
-    only changes the visiting ORDER, so good solutions are found early and
-    the bound shrinks quickly; pruning itself still uses the move-based h.
+    Each iteration is a depth-first search that prunes any node with
+    f > threshold. If no goal is found, the threshold is raised to the
+    smallest f that was pruned, and the search restarts from the root.
+    Memory is O(d) because only the current branch is stored.
+
+    Tie-breaking (NOTE 2): children come from expand() in ascending node
+    order and are visited in that order, so among equal-move paths the one
+    with the smaller node numbers is found first.
+    Cycles: moves back onto the branch's own path are not generated
+    (expand(avoid_cycles=True)), so every branch is finite and the search
+    stops with None when no goal is reachable (next threshold = infinity).
+    Note: nodes are re-created in every iteration and every re-created node
+    counts towards number_of_nodes.
     """
     sys.setrecursionlimit(10000)
-    best: Optional[Node] = None
 
     # Longest straight-line length of any single edge (computed once).
     longest_edge = max(
@@ -428,29 +437,36 @@ def cus2(problem: Problem) -> Optional[Node]:
         # small epsilon so floating-point noise never rounds the estimate up
         return max(1, math.ceil(problem.heuristic(node) / longest_edge - 1e-9))
 
-    def visit(node: Node) -> None:
-        nonlocal best
+    def search(node: Node, threshold: int):
+        """Depth-first search limited by f <= threshold.
+        Returns (goal_node, f). If no goal is found, goal_node is None and f
+        is the smallest f value that exceeded the threshold."""
+        f = node.depth + h(node)
+        if f > threshold:
+            return None, f
         if problem.is_goal(node):
-            if best is None or node.depth < best.depth:
-                best = node
-            return
+            return node, f
 
-        children = problem.expand(node, avoid_cycles=True)
+        smallest = math.inf
+        for child in problem.expand(node, avoid_cycles=True):
+            goal, t = search(child, threshold)
+            if goal is not None:
+                return goal, t
+            smallest = min(smallest, t)
+        return None, smallest
 
-        # Closest to a goal first; ties -> smaller node number, then earlier created
-        children.sort(key=lambda c: (problem.heuristic(c), c.state, c.order))
+    root = problem.root()
+    threshold = h(root)
+    while True:
+        goal, t = search(root, threshold)
+        if goal is not None:
+            return goal
+        # nothing left to explore: no goal reachable
+        if t == math.inf:
+            return None
+        # deepen the f-limit and restart
+        threshold = t
 
-        for child in children:
-            bound = best.depth if best is not None else math.inf
-
-            # Prune branches that cannot improve the best solution
-            if child.depth + h(child) >= bound:
-                continue
-
-            visit(child)
-
-    visit(problem.root())
-    return best
 
 # Method name used on the command line -> strategy function.
 STRATEGIES = {
