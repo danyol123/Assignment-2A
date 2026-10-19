@@ -6,8 +6,7 @@ Usage (Windows CMD), from the folder that contains search.py:
 
 Uses only CUS1 (Uniform-Cost Search). The search state is extended from
 "map node" to "(map node, set of destinations already visited)", and the goal
-is reached when every destination has been visited. search.py is imported
-and is not modified.
+is reached when every destination has been visited.
 """
 
 import sys
@@ -21,7 +20,7 @@ class VisitAll(Problem):
     def __init__(self, base):
         super().__init__(base.nodes, base.edges, base.origin, base.destinations)
         self.all = frozenset(base.destinations)
-        self.seen = {}      # node.order -> destinations visited on the way to that node
+        self.seen = {}
 
     def root(self):
         node = super().root()
@@ -40,8 +39,6 @@ class VisitAll(Problem):
         return children
 
     def repeats(self, node, state, visited):
-        """True if (state, visited) already appears on this branch. A map node may
-        be passed again as long as more destinations have been visited since."""
         while node is not None:
             if node.state == state and self.seen[node.order] == visited:
                 return True
