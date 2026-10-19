@@ -394,53 +394,41 @@ def cus1(problem: Problem) -> Optional[Node]:
 
 
 def cus2(problem: Problem) -> Optional[Node]:
-    """Custom strategy 2 (informed): IDA* (Iterative Deepening A*) that finds
-    the path with the FEWEST MOVES to any destination.
+    """Custom strategy 2 (informed): IDA* for the path with the FEWEST MOVES.
 
-    g(n) = node.depth (number of moves from the origin).
-    h(n) = optimistic number of moves still needed:
-           0 for a destination, otherwise
-           max(1, ceil(straight-line distance to nearest destination
-                       / length of the longest edge in the graph)).
-           One move can never cover more than the longest edge, so h never
-           overestimates (admissible) and the first goal found is optimal
-           in number of moves.
-    f(n) = g(n) + h(n).
+        g(n) = node.depth
+        h(n) = 0 at a destination, otherwise
+            max(1, ceil(distance to nearest destination / longest edge))
+            (admissible: one move can't exceed the longest edge)
+        f(n) = g(n) + h(n)
 
-    Each iteration is a depth-first search that prunes any node with
-    f > threshold. If no goal is found, the threshold is raised to the
-    smallest f that was pruned, and the search restarts from the root.
-    Memory is O(d) because only the current branch is stored.
+        Each iteration is a DFS that prunes nodes with f > threshold. If no goal
+        is found, the threshold rises to the smallest pruned f and the search
+        restarts from the root. Memory is O(d).
 
-    Tie-breaking (NOTE 2): children come from expand() in ascending node
-    order and are visited in that order, so among equal-move paths the one
-    with the smaller node numbers is found first.
-    Cycles: moves back onto the branch's own path are not generated
-    (expand(avoid_cycles=True)), so every branch is finite and the search
-    stops with None when no goal is reachable (next threshold = infinity).
-    Note: nodes are re-created in every iteration and every re-created node
-    counts towards number_of_nodes.
+        Tie-break (NOTE 2): children are visited in ascending node order.
+        Cycles: skipped via expand(avoid_cycles=True); returns None when the
+        next threshold is infinity.
+        Nodes re-created in every iteration still count.
     """
+
     sys.setrecursionlimit(10000)
 
-    # Longest straight-line length of any single edge (computed once).
+    # Longest straight-line length of any single edge.
     longest_edge = max(
         (math.hypot(problem.nodes[a][0] - problem.nodes[b][0],
                     problem.nodes[a][1] - problem.nodes[b][1])
-         for a, neighbours in problem.edges.items() for b, _cost in neighbours),
+         for a, neighbours in problem.edges.items() 
+         for b, _cost in neighbours),
         default=1,
     ) or 1
 
     def h(node: Node) -> int:
         if problem.is_goal(node):
             return 0
-        # small epsilon so floating-point noise never rounds the estimate up
         return max(1, math.ceil(problem.heuristic(node) / longest_edge - 1e-9))
 
     def search(node: Node, threshold: int):
-        """Depth-first search limited by f <= threshold.
-        Returns (goal_node, f). If no goal is found, goal_node is None and f
-        is the smallest f value that exceeded the threshold."""
         f = node.depth + h(node)
         if f > threshold:
             return None, f
@@ -461,10 +449,8 @@ def cus2(problem: Problem) -> Optional[Node]:
         goal, t = search(root, threshold)
         if goal is not None:
             return goal
-        # nothing left to explore: no goal reachable
         if t == math.inf:
             return None
-        # deepen the f-limit and restart
         threshold = t
 
 
