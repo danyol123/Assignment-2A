@@ -394,64 +394,64 @@ def cus1(problem: Problem) -> Optional[Node]:
 
 
 def cus2(problem: Problem) -> Optional[Node]:
-    """Custom strategy 2 (informed): IDA* for the path with the FEWEST MOVES.
-
-        g(n) = node.depth
-        h(n) = 0 at a destination, otherwise
-            max(1, ceil(distance to nearest destination / longest edge))
-            (admissible: one move can't exceed the longest edge)
+    """Custom strategy 2 (informed): IDA* (Iterative Deepening A*) on path COST.
+ 
+        g(n) = node.cost  (total edge cost from the origin)
+        h(n) = straight-line distance to the nearest destination * scale
         f(n) = g(n) + h(n)
-
-        Each iteration is a DFS that prunes nodes with f > threshold. If no goal
-        is found, the threshold rises to the smallest pruned f and the search
-        restarts from the root. Memory is O(d).
-
+ 
+        scale = smallest (edge cost / straight-line length) over all edges,
+        capped at 1. It keeps h admissible even if an edge is cheaper than the
+        straight line (test13). On normal maps scale = 1.
+ 
+        Each round is a depth-first search that does not expand nodes with
+        f > threshold. If no goal is found, the threshold rises to the smallest
+        f that went over it and the search restarts from the root. The first
+        goal found has the lowest cost (h is admissible). Memory is O(d).
+ 
         Tie-break (NOTE 2): children are visited in ascending node order.
-        Cycles: skipped via expand(avoid_cycles=True); returns None when the
-        next threshold is infinity.
-        Nodes re-created in every iteration still count.
+        Cycles: skipped via expand(avoid_cycles=True); returns None when no
+        node went over the threshold (nothing left to try).
+        Nodes re-created in every round still count in number_of_nodes.
     """
-
     sys.setrecursionlimit(10000)
-
-    # Longest straight-line length of any single edge.
-    longest_edge = max(
-        (math.hypot(problem.nodes[a][0] - problem.nodes[b][0],
-                    problem.nodes[a][1] - problem.nodes[b][1])
-         for a, neighbours in problem.edges.items() 
-         for b, _cost in neighbours),
-        default=1,
-    ) or 1
-
-    def h(node: Node) -> int:
-        if problem.is_goal(node):
-            return 0
-        return max(1, math.ceil(problem.heuristic(node) / longest_edge - 1e-9))
-
-    def search(node: Node, threshold: int):
-        f = node.depth + h(node)
-        if f > threshold:
+    EPS = 1e-9
+ 
+    scale = 1.0
+    for a, neighbours in problem.edges.items():
+        for b, cost in neighbours:
+            length = math.hypot(problem.nodes[a][0] - problem.nodes[b][0],
+                                problem.nodes[a][1] - problem.nodes[b][1])
+            if length > 0:
+                scale = min(scale, cost / length)
+ 
+    def f_value(node: Node) -> float:
+        return node.cost + scale * problem.heuristic(node)
+ 
+    def search(node: Node, threshold: float):
+        """Returns (goal node or None, smallest f that went over the threshold)."""
+        f = f_value(node)
+        if f > threshold + EPS:
             return None, f
         if problem.is_goal(node):
             return node, f
-
         smallest = math.inf
         for child in problem.expand(node, avoid_cycles=True):
-            goal, t = search(child, threshold)
+            goal, child_f = search(child, threshold)
             if goal is not None:
-                return goal, t
-            smallest = min(smallest, t)
+                return goal, child_f
+            smallest = min(smallest, child_f)
         return None, smallest
-
+ 
     root = problem.root()
-    threshold = h(root)
+    threshold = f_value(root)
     while True:
-        goal, t = search(root, threshold)
+        goal, next_threshold = search(root, threshold)
         if goal is not None:
             return goal
-        if t == math.inf:
+        if next_threshold == math.inf:
             return None
-        threshold = t
+        threshold = next_threshold
 
 
 # Method name used on the command line -> strategy function.
