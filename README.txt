@@ -1,15 +1,18 @@
 How to run it
 
-In Command Prompt, go to the folder that holds search.py, run_tests.bat and tests\:
+In Command Prompt, go to the folder that holds search.py, results_table.py, visit_all.py and tests\:
 
 cd C:\path\to\your\folder
-python search.py tests\test0.txt DFS
-python search.py tests\test0.txt BFS
-run_tests.bat DFS
-run_tests.bat BFS
-run_tests.bat DFS > dfs_results.txt
 
-The first two lines run one file with one method.
-run_tests.bat DFS and run_tests.bat BFS run all 15 files for that method.
-The last line saves the output to a text file you can paste from.
-run_tests.bat ALL runs every method, and the ones nobody has finished yet just print “not implemented”.
+python search.py <filename> <method>
+python results_table.py tests <method>
+python results_table.py tests ALL
+python visit_all.py <filename> <method>
+
+<filename> is the test map file: tests/test0.txt, tests/test1.txt, etc..
+<method> is one of: DFS, BFS, GBFS, AS, CUS1, CUS2
+
+The search.py line runs one file with one method.
+The first results_table.py line runs all 15 files for that method and saves it in a txt file.
+The second results_table.py line runs all 15 files for that all methods and saves it in a txt file.
+The visit_all.py line runs one file with one method to visit ALL destinations by the shortest path.

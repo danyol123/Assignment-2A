@@ -8,7 +8,7 @@ Run any of them with:  `python search.py tests\testN.txt <METHOD>`
 
 | File | What it tests | Reference answer |
 |------|---------------|------------------|
-| test0.txt | Lecturer's example (from the brief): one-way edges, 2 destinations | Cheapest: goal 4, path 2 1 4, cost 10 |
+| test0.txt | General example: one-way edges, 2 destinations | Cheapest: goal 7, path 1 4 7, cost 8. |
 | test1.txt | Origin is also a destination (zero moves) | Goal 1, path "1", cost 0 |
 | test2.txt | Straight one-way chain, only one possible path; all methods must agree | Goal 5, path 1 2 3 4 5, cost 4 |
 | test3.txt | **No solution**: destinations are in a disconnected part of the map. Contains two-way edges (1<->2), so a tree search with no cycle check will loop forever. Every method must terminate and print `No goal is reachable; N` | No goal reachable |

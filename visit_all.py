@@ -2,7 +2,7 @@
 COS30019 - Assignment 2A - Research: visit ALL destinations by the shortest path.
 
 Usage (Windows CMD), from the folder that contains search.py:
-    python research_all.py <filename> <method>
+    python visit_all.py <filename> <method>
     <method> is one of: DFS, BFS, GBFS, AS, CUS1, CUS2
 
 Works with every method in search.py (it only changes the problem, not the
