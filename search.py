@@ -397,17 +397,15 @@ def cus2(problem: Problem) -> Optional[Node]:
     """Custom strategy 2 (informed): IDA* (Iterative Deepening A*) on path COST.
  
         g(n) = node.cost  (total edge cost from the origin)
-        h(n) = straight-line distance to the nearest destination * scale
+        h(n) = straight-line distance to the nearest destination (same as A*)
         f(n) = g(n) + h(n)
  
-        scale = smallest (edge cost / straight-line length) over all edges,
-        capped at 1. It keeps h admissible even if an edge is cheaper than the
-        straight line (test13). On normal maps scale = 1.
- 
         Each round is a depth-first search that does not expand nodes with
-        f > threshold. If no goal is found, the threshold rises to the smallest
-        f that went over it and the search restarts from the root. The first
-        goal found has the lowest cost (h is admissible). Memory is O(d).
+        f > threshold. The first threshold is f(root). If no goal is found, the
+        threshold is raised to the smallest f that went over it and the search
+        restarts from the root. With an admissible h the first goal found has
+        the lowest cost, and memory is O(d), because only the current branch is
+        stored. Like A*, it is not optimal if h overestimates (see test13).
  
         Tie-break (NOTE 2): children are visited in ascending node order.
         Cycles: skipped via expand(avoid_cycles=True); returns None when no
@@ -417,16 +415,8 @@ def cus2(problem: Problem) -> Optional[Node]:
     sys.setrecursionlimit(10000)
     EPS = 1e-9
  
-    scale = 1.0
-    for a, neighbours in problem.edges.items():
-        for b, cost in neighbours:
-            length = math.hypot(problem.nodes[a][0] - problem.nodes[b][0],
-                                problem.nodes[a][1] - problem.nodes[b][1])
-            if length > 0:
-                scale = min(scale, cost / length)
- 
     def f_value(node: Node) -> float:
-        return node.cost + scale * problem.heuristic(node)
+        return node.cost + problem.heuristic(node)
  
     def search(node: Node, threshold: float):
         """Returns (goal node or None, smallest f that went over the threshold)."""
@@ -452,7 +442,6 @@ def cus2(problem: Problem) -> Optional[Node]:
         if next_threshold == math.inf:
             return None
         threshold = next_threshold
-
 
 # Method name used on the command line -> strategy function.
 STRATEGIES = {
