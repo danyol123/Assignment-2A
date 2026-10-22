@@ -26,6 +26,10 @@ from itertools import combinations
 
 from search import Problem, ProblemFormatError, STRATEGIES, format_result, parse_problem
 
+LIMIT = 2_000_000
+
+class NodeLimit(Exception):
+    pass
 
 class VisitAll(Problem):
     """Route-finding problem whose goal is to visit every target destination."""
@@ -46,6 +50,11 @@ class VisitAll(Problem):
         node = super().root()
         self.seen[node.order] = frozenset([node.state]) & self.all
         return node
+
+    def make_node(self, state, parent, step_cost=0):
+        if self.nodes_created >= LIMIT:
+            raise NodeLimit
+        return super().make_node(state, parent, step_cost)
 
     def expand(self, node, avoid_cycles=False):
         children = []
@@ -119,7 +128,13 @@ def main(argv):
         print(f"Cannot read '{argv[1]}': {err}", file=sys.stderr)
         return 1
 
-    goal, nodes, visited, unreachable = solve(base, STRATEGIES[method])
+    try:
+        goal, nodes, visited, unreachable = solve(base, STRATEGIES[method])
+    except NodeLimit:
+        print(f"{argv[1]} VISITALL-{method}")
+        print(f"Stopped after {LIMIT} nodes without reaching a goal")
+        return 0
+    
     print(format_result(argv[1], "VISITALL-" + method, goal, nodes))
     if goal:
         print(f"Total cost: {goal.cost}, moves: {goal.depth}")
