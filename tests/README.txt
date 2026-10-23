@@ -19,7 +19,7 @@ Run any of them with:  `python search.py tests\testN.txt <METHOD>`
 | test8.txt | Fewest moves vs lowest cost: one direct edge costing 20 versus a 5-move path costing 10. Separates BFS from A* | Cheapest: 1 3 4 5 6 2, cost 10. BFS: 1 2 (cost 20) |
 | test9.txt | Greedy trap: GBFS follows the straight line to the goal and ends up on the expensive route; A* should avoid it | A*/optimal: 1 4 5 6, cost 12. GBFS typically: 1 2 3 6, cost 26 |
 | test10.txt | Dead-end branch: DFS (smaller node first) goes into 2->3->4, which dead-ends, and must backtrack | Goal 7, path 1 5 6 7, cost 8 |
-| test11.txt | 5x5 grid (25 nodes), origin in the centre (13), four equidistant corner destinations (1; 5; 21; 25). Larger tree plus 4-way ties | Goal 1, path 13 8 3 2 1, cost 4 (all corners cost 4; smallest number first) |
+| test11.txt | 5x5 grid (25 nodes), origin in the centre (13), four equidistant corner destinations (1; 5; 21; 25). Larger tree plus 4-way ties | Goal 1, path 13 8 3 2 1 or 13 8 7 2 1, cost 4 (all corners cost 4; smallest number first) |
 | test12.txt | Non-consecutive node IDs (1, 2, 10, 20) and numeric (not text) ordering: 2 must come before 10 | Goal 20, path 1 2 20, cost 6 |
 | test13.txt | Heuristic that overestimates: edges 1->2 and 2->4 are cheaper than the straight-line distance, so A* with plain Euclidean h can return a non-optimal path. Good material for the Insights section | Optimal: 1 3 4, cost 6. A* with Euclidean h likely gives 1 2 4, cost 8 |
 | test14.txt | Messy file formatting: Windows CRLF line endings, blank lines, tabs, extra spaces inside brackets and around `;` | Goal 3, path 1 3, cost 5 |
