@@ -366,7 +366,7 @@ def cus1(problem: Problem) -> Optional[Node]:
  
     The goals checked whenever a node gets removed from the frontier and not when it is created. This is so the search method locates the cheapest path towards the goal first making it optimal.
  
-    Tie-breaking: If the cost is equal, the smaller node number is chosen first. But, if it is still tied, the newer node is thus chosen first in line.
+    Tie-breaking: If the cost is equal, the smaller node number is chosen first. But, if it is still tied, the earlier-node is thus chosen first in line.
     Cycles: The search avoids revisiting nodes on the same path. It uses zero global explored sets, but will stop if the goal is unreachable.
     Complete and optimality: It is complete and finds the cheapest path when all edge costs are non-negative. But, it may explore even more nodes, leading it to get slow and memory-intensive in certain cases.
     """
