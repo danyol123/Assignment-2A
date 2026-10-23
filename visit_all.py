@@ -5,17 +5,9 @@ Usage (Windows CMD), from the folder that contains search.py:
     python visit_all.py <filename> <method>
     <method> is one of: DFS, BFS, GBFS, AS, CUS1, CUS2
 
-Works with every method in search.py (it only changes the problem, not the
-search code). The search state is extended from "map node" to
-"(map node, set of destinations already visited)", and the goal is reached
-when every target destination has been visited.
-
-Unreachable destinations:
-  1. Destinations that cannot be reached from the origin at all are dropped
-     first (simple graph reachability) and reported at the end.
-  2. If the remaining ones still cannot all be visited in one walk (for
-     example because of one-way edges), the program tries smaller groups,
-     largest first, and reports the best walk it can find.
+If destination is unreachable:
+  1. Destinations that cannot be reached from the origin at all are dropped first (simple graph reachability) and reported at the end.
+  2. If the remaining ones still cannot all be visited in one walk (for example because of one-way edges), the program tries smaller groups, largest first, and reports the best walk it can find.
   3. If nothing can be visited, it prints "No goal is reachable; <nodes>".
 """
 
@@ -118,7 +110,7 @@ def solve(base, strategy):
 
 def main(argv):
     if len(argv) != 3 or argv[2].upper() not in STRATEGIES:
-        print("Usage: python research_all.py <filename> <method>", file=sys.stderr)
+        print("Usage: python visit_all.py <filename> <method>", file=sys.stderr)
         print("Methods: " + ", ".join(STRATEGIES), file=sys.stderr)
         return 1
     method = argv[2].upper()
