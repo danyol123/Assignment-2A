@@ -1,6 +1,4 @@
 """
-Builds a results table for any search method over every test file in a folder.
-
 Usage (run from the folder that contains search.py):
     python results_table.py [folder] [method]
 
@@ -34,15 +32,15 @@ def best_cost(problem):
     while heap:
         d, node = heapq.heappop(heap)
         if d > dist.get(node, math.inf):
-            continue                       # outdated heap entry
+            continue
         if node in goals:
-            return d                       # first goal popped = cheapest
+            return d
         for neighbour, step_cost in problem.edges.get(node, []):
             new_d = d + step_cost
             if new_d < dist.get(neighbour, math.inf):
                 dist[neighbour] = new_d
                 heapq.heappush(heap, (new_d, neighbour))
-    return None                            # no destination reachable
+    return None
 
 
 def test_number(path):
@@ -56,12 +54,12 @@ def run_method(files, best_costs, method):
     rows = []
     for file in files:
         name = os.path.splitext(os.path.basename(file))[0]
-        problem = parse_problem(file)      # parse fresh: node counter starts at 0
+        problem = parse_problem(file)
         try:
             goal = STRATEGIES[method](problem)
         except NotImplementedError:
-            return None                    # whole method is missing: skip it
-        except Exception as err:           # one failing test must not stop the rest
+            return None
+        except Exception as err:
             print(f"{method} failed on {name}: {err!r}", file=sys.stderr)
             rows.append([name, best_costs[file], f"ERROR: {err}", "-", "-", "-"])
             continue
@@ -107,8 +105,8 @@ def main():
 
     best_costs = {f: best_cost(parse_problem(f)) for f in files}
     header = ["Test", "Best cost", "Path", "Moves", "Cost", "Nodes"]
-    done = {}                              # method -> rows
-
+    done = {}
+    
     for method in methods:
         rows = run_method(files, best_costs, method)
         if rows is None:
