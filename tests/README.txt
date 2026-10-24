@@ -8,7 +8,7 @@ Run any of them with:  `python search.py tests\testN.txt <METHOD>`
 
 | File | What it tests | Reference answer |
 |------|---------------|------------------|
-| test0.txt | General example: one-way edges, 2 destinations | Cheapest: goal 7, path 1 4 7, cost 8. |
+| test0.txt | General example: one-way edges, 2 destinations (6 & 7) | Cheapest: goal 7, path 1 4 7, cost 8. |
 | test1.txt | Origin is also a destination (zero moves) | Goal 1, path "1", cost 0 |
 | test2.txt | Straight one-way chain, only one possible path; all methods must agree | Goal 5, path 1 2 3 4 5, cost 4 |
 | test3.txt | **No solution**: destinations are in a disconnected part of the map. Contains two-way edges (1<->2), so a tree search with no cycle check will loop forever. Every method must terminate and print `No goal is reachable; N` | No goal reachable |
@@ -21,7 +21,7 @@ Run any of them with:  `python search.py tests\testN.txt <METHOD>`
 | test10.txt | Dead-end branch: DFS (smaller node first) goes into 2->3->4, which dead-ends, and must backtrack | Goal 7, path 1 5 6 7, cost 8 |
 | test11.txt | 5x5 grid (25 nodes), origin in the centre (13), four equidistant corner destinations (1; 5; 21; 25). Larger tree plus 4-way ties | Goal 1, path 13 8 3 2 1 or 13 8 7 2 1, cost 4 (all corners cost 4; smallest number first) |
 | test12.txt | Non-consecutive node IDs (1, 2, 10, 20) and numeric (not text) ordering: 2 must come before 10 | Goal 20, path 1 2 20, cost 6 |
-| test13.txt | Heuristic that overestimates: edges 1->2 and 2->4 are cheaper than the straight-line distance, so A* with plain Euclidean h can return a non-optimal path. Good material for the Insights section | Optimal: 1 3 4, cost 6. A* with Euclidean h likely gives 1 2 4, cost 8 |
+| test13.txt | Heuristic that overestimates: edge 3->4 is cheaper than the straight-line distance, so A* with plain Euclidean h can return a non-optimal path. Good material for the Insights section | Optimal: 1 3 4, cost 6. A* with Euclidean h likely gives 1 2 4, cost 8 |
 | test14.txt | Messy file formatting: Windows CRLF line endings, blank lines, tabs, extra spaces inside brackets and around `;` | Goal 3, path 1 3, cost 5 |
 
 ## Things worth knowing
